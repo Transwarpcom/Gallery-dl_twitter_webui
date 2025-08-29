@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@{{ username }} 的推文</title>
+    <style>
+        /* 通用样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #F7F9F9;
+            color: #0F1419;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        a {
+            text-decoration: none;
+            color: #1DA1F2;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* 加载指示器 */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #1DA1F2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+            display: none; /* 默认隐藏 */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 头部和返回链接 */
+        .header-container {
+            width: 100%;
+            margin: 0 auto 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #1DA1F2;
+        }
+        .back-link::before {
+            content: '←';
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+        h1 {
+            color: #0F1419;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-weight: 800;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Flash 消息 (虽然移除功能，但样式可能仍需要，以防将来添加其他 flash 消息) */
+        .flash-message {
+            padding: 10px 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            max-width: 800px; /* 与内容容器对齐 */
+            box-sizing: border-box;
+        }
+        .flash-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        /* 重新扫描按钮容器 (已移除) */
+        /* .rescan-button-container { ... } */
+        /* .rescan-button { ... } */
+
+
+        /* 帖子容器 */
+        .post-container {
+            width: 100%;
+            margin: 0 auto;
+        }
+        .post-container.loading {
+            display: none;
+        }
+        
+        /* 单个帖子卡片 */
+        .post {
+            background-color: #FFFFFF;
+            border: 1px solid #EFF3F4;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* 帖子头部 (头像、名称、时间) */
+        .post-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .post-header .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin-right: 12px;
+            border: 1px solid #EFF3F4;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .post-header .user-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        .post-header .username {
+            font-weight: bold;
+            color: #0F1419;
+            font-size: 1.05em;
+        }
+        .post-header .username:hover {
+            color: #1DA1F2;
+            text-decoration: underline;
+        }
+        .post-header .timestamp {
+            color: #536471;
+            font-size: 0.9em;
+            margin-top: 2px;
+        }
+
+        /* 帖子内容 (文本) */
+        .post-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #0F1419;
+            font-size: 1em;
+        }
+
+        /* 媒体 (图片、视频) */
+        .post-media {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            border-top: 1px solid #EFF3F4;
+            padding-top: 15px;
+        }
+        .post-media img, .post-media video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid #E1E8ED;
+            object-fit: cover;
+            background-color: #F7F9F9;
+        }
+
+        /* 帖子统计数据 (点赞、转发等) */
+        .post-stats {
+            color: #536471;
+            font-size: 0.9em;
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-top: 1px solid #EFF3F4;
+            padding-top: 15px;
+        }
+        .post-stats span {
+            display: inline-flex;
+            align-items: center;
+        }
+        .post-stats span::before {
+            margin-right: 6px;
+            font-size: 1.1em;
+            line-height: 1;
+        }
+        .post-stats span:nth-child(1)::before { content: '❤️'; }
+        .post-stats span:nth-child(2)::before { content: '🔄'; }
+        .post-stats span:nth-child(3)::before { content: '💬'; }
+        .post-stats span:nth-child(4)::before { content: '🔖'; }
+        
+        /* 推文 ID */
+        .post-id-text {
+            display: block;
+            margin-top: 15px;
+            color: #8899a6;
+            font-size: 0.8em;
+            text-align: right;
+        }
+
+        /* 未找到帖子消息 */
+        .post-container p {
+            text-align: center;
+            color: #536471;
+            font-size: 1em;
+        }
+
+        /* 无限滚动特定样式 */
+        #loadingMore {
+            text-align: center;
+            padding: 20px;
+            font-weight: bold;
+            color: #1DA1F2;
+            display: none; /* 默认隐藏 */
+        }
+        #noMorePosts {
+            text-align: center;
+            padding: 20px;
+            color: #536471;
+            display: none; /* 默认隐藏 */
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner" id="loadingSpinner"></div>
+    <div class="header-container" id="headerContainer">
+        <a href="{{ url_for('index') }}" class="back-link">返回用户列表</a>
+        <h1>@{{ username }} 的推文 ({{ total_posts }} 条)</h1>
+    </div>
+
+    {# Flash 消息 (移除此处显示，但模板中保留样式以防万一) #}
+    {#
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages-wrapper" style="width:100%; max-width:800px;">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    #}
+
+    {# 重新扫描按钮 (已移除) #}
+    {#
+    <div class="rescan-button-container">
+        <form method="POST" action="{{ url_for('admin_scan_user', username=username) }}">
+            <button type="submit" class="rescan-button">重新扫描此用户</button>
+        </form>
+    </div>
+    #}
+
+    <div class="post-container" id="postsContainer">
+        {% if posts %}
+            {% for post in posts %}
+            <div class="post">
+                <div class="post-header">
+                    <img src="{{ url_for('serve_avatar', username=post.user.username) }}" alt="{{ post.user.username }} 的头像" class="avatar">
+                    <div class="user-info">
+                        <a href="#" class="username">@{{ post.user.username }}</a>
+                        <span class="timestamp" title="{{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') if post.timestamp else '时间未知' }}">
+                            {{ post.timestamp | relative_time }}
+                        </span>
+                    </div>
+                </div>
+                <div class="post-content">
+                    {{ post.text_content | default('无文本内容') }}
+                </div>
+                {% if post.media_files %}
+                <div class="post-media">
+                    {% for media_file_path in post.media_files %}
+                        {% set full_media_url = url_for('serve_media', filename=media_file_path) %}
+                        {% if media_file_path.lower().endswith(IMAGE_EXTENSIONS) %}
+                            <img src="{{ full_media_url }}" alt="推文图片" loading="lazy">
+                        {% elif media_file_path.lower().endswith(VIDEO_EXTENSIONS) %}
+                            <video controls preload="metadata" src="{{ full_media_url }}"></video>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="post-stats">
+                    <span>{{ post.favorite_count | default(0) }}</span>
+                    <span>{{ post.retweet_count | default(0) }}</span>
+                    <span>{{ post.reply_count | default(0) }}</span>
+                    <span>{{ post.bookmark_count | default(0) }}</span>
+                </div>
+                <small class="post-id-text">ID: {{ post.id }}</small>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>未找到 @{{ username }} 的任何推文。</p>
+        {% endif %}
+
+        {# 无限滚动加载指示器 #}
+        <div class="spinner" id="loadingMore"></div>
+        <div id="noMorePosts">没有更多推文了。</div>
+    </div>
+
+    <script>
+        // 初始页面加载指示器管理
+        document.addEventListener('DOMContentLoaded', function() {
+            var globalSpinner = document.getElementById('loadingSpinner');
+            var header = document.getElementById('headerContainer');
+            var postsContainer = document.getElementById('postsContainer');
+
+            globalSpinner.style.display = 'none';
+            header.style.display = 'flex';
+            postsContainer.classList.remove('loading');
+
+            // --- 无限滚动逻辑 ---
+            var currentPage = 1;
+            var hasNext = {{ 'true' if has_next else 'false' }};
+            var username = "{{ username }}";
+            var loading = false;
+
+            var loadingMoreSpinner = document.getElementById('loadingMore');
+            var noMorePostsMessage = document.getElementById('noMorePosts');
+            var postsDiv = document.getElementById('postsContainer');
+
+            function loadMorePosts() {
+                if (loading || !hasNext) {
+                    return;
+                }
+
+                loading = true;
+                loadingMoreSpinner.style.display = 'block';
+
+                currentPage++;
+                var api_url = "{{ url_for('api_user_posts', username=username) }}" + "?page=" + currentPage;
+
+                fetch(api_url)
+                    .then(response => response.json())
+                    .then(data => {
+                        loading = false;
+                        loadingMoreSpinner.style.display = 'none';
+
+                        if (data.posts && data.posts.length > 0) {
+                            data.posts.forEach(post => {
+                                var postHtml = `
+                                    <div class="post">
+                                        <div class="post-header">
+                                            <img src="{{ url_for('serve_avatar', username='') }}${post.username}" alt="${post.username} 的头像" class="avatar">
+                                            <div class="user-info">
+                                                <a href="#" class="username">@${post.username}</a>
+                                                <span class="timestamp" title="${post.timestamp || '时间未知'}">
+                                                    ${formatRelativeTime(post.timestamp)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="post-content">
+                                            ${post.text_content || '无文本内容'}
+                                        </div>
+                                        ${post.media_files.length > 0 ? `
+                                        <div class="post-media">
+                                            ${post.media_files.map(media_file_path => {
+                                                const full_media_url = "{{ url_for('serve_media', filename='') }}" + media_file_path;
+                                                const lowerPath = media_file_path.toLowerCase();
+                                                // 通过 Jinja 的 tojson 访问全局常量
+                                                if ({{ IMAGE_EXTENSIONS | tojson }}.some(ext => lowerPath.endsWith(ext))) {
+                                                    return `<img src="${full_media_url}" alt="推文图片" loading="lazy">`;
+                                                } else if ({{ VIDEO_EXTENSIONS | tojson }}.some(ext => lowerPath.endsWith(ext))) {
+                                                    return `<video controls preload="metadata" src="${full_media_url}"></video>`;
+                                                }
+                                                return '';
+                                            }).join('')}
+                                        </div>
+                                        ` : ''}
+                                        <div class="post-stats">
+                                            <span>${post.favorite_count || 0}</span>
+                                            <span>${post.retweet_count || 0}</span>
+                                            <span>${post.reply_count || 0}</span>
+                                            <span>${post.bookmark_count || 0}</span>
+                                        </div>
+                                        <small class="post-id-text">ID: ${post.id}</small>
+                                    </div>
+                                `;
+                                postsDiv.insertAdjacentHTML('beforeend', postHtml);
+                            });
+                        }
+
+                        hasNext = data.has_next;
+                        if (!hasNext) {
+                            noMorePostsMessage.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('加载更多帖子时出错:', error);
+                        loading = false;
+                        loadingMoreSpinner.style.display = 'none';
+                    });
+            }
+
+            // 格式化相对时间的函数 (客户端实现，用于动态加载的帖子)
+            function formatRelativeTime(timestampStr) {
+                if (!timestampStr) return "时间未知";
+                const dt = new Date(timestampStr);
+                const now = new Date();
+                const diffMs = now - dt;
+                const diffSeconds = Math.floor(diffMs / 1000);
+                const diffMinutes = Math.floor(diffSeconds / 60);
+                const diffHours = Math.floor(diffMinutes / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                const diffMonths = Math.floor(diffDays / 30.437); // 月平均天数
+                const diffYears = Math.floor(diffDays / 365.25); // 年平均天数
+
+                if (diffYears > 0) return `${diffYears} 年前`;
+                if (diffMonths > 0) return `${diffMonths} 月前`;
+                if (diffDays > 0) return `${diffDays} 天前`;
+                if (diffHours > 0) return `${diffHours} 小时前`;
+                if (diffMinutes > 0) return `${diffMinutes} 分钟前`;
+                return "刚刚";
+            }
+
+            // 滚动事件监听器
+            window.addEventListener('scroll', () => {
+                if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200) && hasNext && !loading) {
+                    loadMorePosts();
+                }
+            });
+
+            // 如果初始渲染不满一屏且有下一页，尝试加载第一页
+            if (hasNext && postsDiv.offsetHeight < window.innerHeight && {{ (total_posts > 0) | tojson }}) {
+                 loadMorePosts();
+            }
+            if (!hasNext) {
+                noMorePostsMessage.style.display = 'block';
+            }
+
+            // 点击返回用户列表时，显示全局加载指示器
+            document.querySelector('.back-link').addEventListener('click', function() {
+                document.getElementById('loadingSpinner').style.display = 'block';
+                document.getElementById('headerContainer').style.display = 'none';
+                document.getElementById('postsContainer').classList.add('loading');
+            });
+        });
+    </script>
+</body>
+</html>
