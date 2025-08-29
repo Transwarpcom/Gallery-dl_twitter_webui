@@ -72,7 +72,7 @@
             width: 100%;
         }
 
-        /* Flash 消息 (虽然移除功能，但样式可能仍需要，以防将来添加其他 flash 消息) */
+        /* Flash 消息 */
         .flash-message {
             padding: 10px 20px;
             margin-bottom: 15px;
@@ -94,9 +94,70 @@
             border: 1px solid #c3e6cb;
         }
 
-        /* 重新扫描按钮容器 (已移除) */
-        /* .rescan-button-container { ... } */
-        /* .rescan-button { ... } */
+        /* 用户详细信息头部 (Profile Section) */
+        .user-profile-header {
+            background-color: #FFFFFF;
+            border: 1px solid #EFF3F4;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .user-profile-header .profile-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            border: 2px solid #E1E8ED;
+            object-fit: cover;
+            display: block; /* 居中 */
+        }
+        .user-profile-header .profile-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #0F1419;
+            margin-bottom: 5px;
+        }
+        .user-profile-header .profile-username {
+            color: #536471;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .user-profile-header .profile-location,
+        .user-profile-header .profile-description {
+            color: #536471;
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .user-profile-header .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            border-top: 1px solid #EFF3F4;
+            padding-top: 15px;
+            flex-wrap: wrap; /* 允许换行 */
+        }
+        .user-profile-header .profile-stats div {
+            text-align: center;
+            min-width: 80px; /* 确保小屏幕上每个统计项有最小宽度 */
+        }
+        .user-profile-header .profile-stats .count {
+            font-weight: bold;
+            color: #0F1419;
+            font-size: 1.1em;
+        }
+        .user-profile-header .profile-stats .label {
+            color: #536471;
+            font-size: 0.9em;
+        }
 
 
         /* 帖子容器 */
@@ -148,11 +209,27 @@
             color: #1DA1F2;
             text-decoration: underline;
         }
-        .post-header .timestamp {
+        .post-header .user-nick {
             color: #536471;
             font-size: 0.9em;
             margin-top: 2px;
         }
+        .post-header .user-meta { /* 这个 CSS 类在 JS 渲染的帖子中已弃用，但为了完整性保留 */
+            color: #536471;
+            font-size: 0.8em;
+            margin-top: 2px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .post-header .user-meta span {
+            display: inline-flex;
+            align-items: center;
+        }
+        .post-header .user-meta span::before {
+            margin-right: 3px;
+        }
+
 
         /* 帖子内容 (文本) */
         .post-content {
@@ -246,27 +323,38 @@
         <h1>@{{ username }} 的推文 ({{ total_posts }} 条)</h1>
     </div>
 
-    {# Flash 消息 (移除此处显示，但模板中保留样式以防万一) #}
-    {#
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages-wrapper" style="width:100%; max-width:800px;">
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
+    {# 用户详细信息头部 #}
+    <div class="user-profile-header">
+        <img src="{{ url_for('serve_avatar', username=user_details.username) }}" alt="{{ user_details.username }} 的头像" class="profile-avatar">
+        <div class="profile-name">{{ user_details.name or user_details.username }} {% if user_details.verified %}✅{% endif %}</div>
+        <div class="profile-username">@{{ user_details.username }}</div>
+        {% if user_details.nick and user_details.nick != user_details.name and user_details.nick != user_details.username %}
+            <div class="profile-username">昵称: {{ user_details.nick }}</div>
         {% endif %}
-    {% endwith %}
-    #}
-
-    {# 重新扫描按钮 (已移除) #}
-    {#
-    <div class="rescan-button-container">
-        <form method="POST" action="{{ url_for('admin_scan_user', username=username) }}">
-            <button type="submit" class="rescan-button">重新扫描此用户</button>
-        </form>
+        {% if user_details.location %}<div class="profile-location">📍 {{ user_details.location }}</div>{% endif %}
+        {% if user_details.description %}<div class="profile-description">{{ user_details.description }}</div>{% endif %}
+        <div class="profile-stats">
+            {% if user_details.followers_count is not none %}
+                <div><div class="count">{{ user_details.followers_count | default(0) | format_large_number }}</div><div class="label">粉丝</div></div>
+            {% endif %}
+            {% if user_details.friends_count is not none %}
+                <div><div class="count">{{ user_details.friends_count | default(0) | format_large_number }}</div><div class="label">关注</div></div>
+            {% endif %}
+            {% if user_details.statuses_count is not none %}
+                <div><div class="count">{{ user_details.statuses_count | default(0) | format_large_number }}</div><div class="label">推文</div></div>
+            {% endif %}
+            {% if user_details.listed_count is not none %}
+                <div><div class="count">{{ user_details.listed_count | default(0) | format_large_number }}</div><div class="label">列表</div></div>
+            {% endif %}
+            {% if user_details.favourites_count is not none %}
+                <div><div class="count">{{ user_details.favourites_count | default(0) | format_large_number }}</div><div class="label">喜欢</div></div>
+            {% endif %}
+            {% if user_details.media_count is not none %}
+                <div><div class="count">{{ user_details.media_count | default(0) | format_large_number }}</div><div class="label">媒体</div></div>
+            {% endif %}
+        </div>
     </div>
-    #}
+
 
     <div class="post-container" id="postsContainer">
         {% if posts %}
@@ -275,14 +363,22 @@
                 <div class="post-header">
                     <img src="{{ url_for('serve_avatar', username=post.user.username) }}" alt="{{ post.user.username }} 的头像" class="avatar">
                     <div class="user-info">
-                        <a href="#" class="username">@{{ post.user.username }}</a>
+                        <span class="username">
+                            {{ post.user.name or post.user.username }}
+                            {% if post.user.verified %}✅{% endif %}
+                        </span>
+                        <span class="user-nick">@{{ post.user.username }}
+                            {% if post.user.nick and post.user.nick != post.user.name and post.user.nick != post.user.username %}
+                                ({{ post.user.nick }})
+                            {% endif %}
+                        </span>
                         <span class="timestamp" title="{{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') if post.timestamp else '时间未知' }}">
                             {{ post.timestamp | relative_time }}
                         </span>
                     </div>
                 </div>
                 <div class="post-content">
-                    {{ post.text_content | default('无文本内容') }}
+                    {{ post.text_content or '无文本内容' }}
                 </div>
                 {% if post.media_files %}
                 <div class="post-media">
@@ -297,10 +393,10 @@
                 </div>
                 {% endif %}
                 <div class="post-stats">
-                    <span>{{ post.favorite_count | default(0) }}</span>
-                    <span>{{ post.retweet_count | default(0) }}</span>
-                    <span>{{ post.reply_count | default(0) }}</span>
-                    <span>{{ post.bookmark_count | default(0) }}</span>
+                    <span>{{ post.favorite_count or 0 }}</span>
+                    <span>{{ post.retweet_count or 0 }}</span>
+                    <span>{{ post.reply_count or 0 }}</span>
+                    <span>{{ post.bookmark_count or 0 }}</span>
                 </div>
                 <small class="post-id-text">ID: {{ post.id }}</small>
             </div>
@@ -315,6 +411,8 @@
     </div>
 
     <script>
+        // ... (JavaScript 保持不变，因为它已经处理了 post.user_info.name/nick 等) ...
+
         // 初始页面加载指示器管理
         document.addEventListener('DOMContentLoaded', function() {
             var globalSpinner = document.getElementById('loadingSpinner');
@@ -357,9 +455,15 @@
                                 var postHtml = `
                                     <div class="post">
                                         <div class="post-header">
-                                            <img src="{{ url_for('serve_avatar', username='') }}${post.username}" alt="${post.username} 的头像" class="avatar">
+                                            <img src="{{ url_for('serve_avatar', username='') }}${post.user_info.username}" alt="${post.user_info.username} 的头像" class="avatar">
                                             <div class="user-info">
-                                                <a href="#" class="username">@${post.username}</a>
+                                                <span class="username">
+                                                    ${post.user_info.name || post.user_info.username}
+                                                    ${post.user_info.verified ? '✅' : ''}
+                                                </span>
+                                                <span class="user-nick">@${post.user_info.username}
+                                                    ${post.user_info.nick && post.user_info.nick !== post.user_info.name && post.user_info.nick !== post.user_info.username ? `(${post.user_info.nick})` : ''}
+                                                </span>
                                                 <span class="timestamp" title="${post.timestamp || '时间未知'}">
                                                     ${formatRelativeTime(post.timestamp)}
                                                 </span>
@@ -437,7 +541,7 @@
             });
 
             // 如果初始渲染不满一屏且有下一页，尝试加载第一页
-            if (hasNext && postsDiv.offsetHeight < window.innerHeight && {{ (total_posts > 0) | tojson }}) {
+            if (hasNext && postsDiv.offsetHeight < window.innerHeight && {{ (total_posts > 0) or false }}) { /* Added 'or false' for safety */
                  loadMorePosts();
             }
             if (!hasNext) {
@@ -451,6 +555,21 @@
                 document.getElementById('postsContainer').classList.add('loading');
             });
         });
+
+        // Jinja2 format_large_number 过滤器客户端版本 (用于动态加载内容)
+        function formatLargeNumber(num) {
+            if (num === null || num === undefined) return '0';
+            num = parseInt(num, 10);
+            if (isNaN(num)) return '0';
+
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            }
+            return num.toString();
+        }
     </script>
 </body>
 </html>
