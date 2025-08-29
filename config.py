@@ -19,7 +19,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 # 日志配置
 LOG_FILE = os.path.join(BASE_DIR, 'app.log')
-LOG_LEVEL = 'ERROR' # 选项: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL = 'WARNING' # 选项: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 # 分页
 POSTS_PER_PAGE = 20 # 初始渲染和 API 调用每页显示的帖子数量
@@ -27,3 +27,4 @@ POSTS_PER_PAGE = 20 # 初始渲染和 API 调用每页显示的帖子数量
 # 自动扫描配置
 ENABLE_AUTO_SCAN = True # 设置为 False 以禁用后台自动扫描
 AUTO_SCAN_INTERVAL_HOURS = 24 # 自动扫描的运行频率, 单位小时 (例如, 24 为每天一次)
+
