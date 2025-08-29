@@ -55,6 +55,71 @@
             width: 100%;
         }
 
+        /* 用户详细信息头部 (Profile Section) */
+        .user-profile-header {
+            background-color: #FFFFFF;
+            border: 1px solid #EFF3F4;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 800px; /* 仍然保留，因为 bot 友好页面通常是单页 */
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .user-profile-header .profile-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+            border: 2px solid #E1E8ED;
+            object-fit: cover;
+            display: block; /* 居中 */
+        }
+        .user-profile-header .profile-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #0F1419;
+            margin-bottom: 5px;
+        }
+        .user-profile-header .profile-username {
+            color: #536471;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .user-profile-header .profile-location,
+        .user-profile-header .profile-description {
+            color: #536471;
+            font-size: 1em;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .user-profile-header .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            border-top: 1px solid #EFF3F4;
+            padding-top: 15px;
+            flex-wrap: wrap; /* 允许换行 */
+        }
+        .user-profile-header .profile-stats div {
+            text-align: center;
+            min-width: 80px; /* 确保小屏幕上每个统计项有最小宽度 */
+        }
+        .user-profile-header .profile-stats .count {
+            font-weight: bold;
+            color: #0F1419;
+            font-size: 1.1em;
+        }
+        .user-profile-header .profile-stats .label {
+            color: #536471;
+            font-size: 0.9em;
+        }
+
         .post-container {
             width: 100%;
             margin: 0 auto;
@@ -98,11 +163,12 @@
             color: #1DA1F2;
             text-decoration: underline;
         }
-        .post-header .timestamp {
+        .post-header .user-nick {
             color: #536471;
             font-size: 0.9em;
             margin-top: 2px;
         }
+
 
         .post-content {
             margin-bottom: 15px;
@@ -177,6 +243,39 @@
         <p>此页面旨在为爬虫或希望一次性获取所有内容的用户提供服务。</p>
     </div>
 
+    {# 用户详细信息头部 #}
+    <div class="user-profile-header">
+        <img src="{{ url_for('serve_avatar', username=user_details.username) }}" alt="{{ user_details.username }} 的头像" class="profile-avatar">
+        <div class="profile-name">{{ user_details.name | default(user_details.username) }} {% if user_details.verified %}✅{% endif %}</div>
+        <div class="profile-username">@{{ user_details.username }}</div>
+        {% if user_details.nick and user_details.nick != user_details.name and user_details.nick != user_details.username %}
+            <div class="profile-username">昵称: {{ user_details.nick }}</div>
+        {% endif %}
+        {% if user_details.location %}<div class="profile-location">📍 {{ user_details.location }}</div>{% endif %}
+        {% if user_details.description %}<div class="profile-description">{{ user_details.description }}</div>{% endif %}
+        <div class="profile-stats">
+            {% if user_details.followers_count is not none %}
+                <div><div class="count">{{ user_details.followers_count | default(0) | format_large_number }}</div><div class="label">粉丝</div></div>
+            {% endif %}
+            {% if user_details.friends_count is not none %}
+                <div><div class="count">{{ user_details.friends_count | default(0) | format_large_number }}</div><div class="label">关注</div></div>
+            {% endif %}
+            {% if user_details.statuses_count is not none %}
+                <div><div class="count">{{ user_details.statuses_count | default(0) | format_large_number }}</div><div class="label">推文</div></div>
+            {% endif %}
+            {% if user_details.listed_count is not none %}
+                <div><div class="count">{{ user_details.listed_count | default(0) | format_large_number }}</div><div class="label">列表</div></div>
+            {% endif %}
+            {% if user_details.favourites_count is not none %}
+                <div><div class="count">{{ user_details.favourites_count | default(0) | format_large_number }}</div><div class="label">喜欢</div></div>
+            {% endif %}
+            {% if user_details.media_count is not none %}
+                <div><div class="count">{{ user_details.media_count | default(0) | format_large_number }}</div><div class="label">媒体</div></div>
+            {% endif %}
+        </div>
+    </div>
+
+
     <div class="post-container">
         {% if posts %}
             {% for post in posts %}
@@ -184,7 +283,15 @@
                 <div class="post-header">
                     <img src="{{ url_for('serve_avatar', username=post.user.username) }}" alt="{{ post.user.username }} 的头像" class="avatar">
                     <div class="user-info">
-                        <a href="#" class="username">@{{ post.user.username }}</a>
+                        <span class="username">
+                            {{ post.user.name | default(post.user.username) }}
+                            {% if post.user.verified %}✅{% endif %}
+                        </span>
+                        <span class="user-nick">@{{ post.user.username }}
+                            {% if post.user.nick and post.user.nick != post.user.name and post.user.nick != post.user.username %}
+                                ({{ post.user.nick }})
+                            {% endif %}
+                        </span>
                         <span class="timestamp" title="{{ post.timestamp.strftime('%Y-%m-%d %H:%M:%S') if post.timestamp else '时间未知' }}">
                             {{ post.timestamp | relative_time }}
                         </span>
@@ -222,8 +329,6 @@
     <script>
         // 返回链接加载指示器 (此页面上没有全局加载器)
         document.querySelector('.back-link').addEventListener('click', function() {
-            // Note: loadingSpinner is not present on this page, only for user_posts.html
-            // For now, simply hide content.
             document.querySelector('.header-container').style.display = 'none';
             document.querySelector('.post-container').style.display = 'none';
         });
