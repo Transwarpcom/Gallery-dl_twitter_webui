@@ -8,7 +8,7 @@ import logging
 import atexit
 
 # Flask Web 应用相关导入
-from flask import Flask, render_template, url_for, abort, send_from_directory, Response, request, jsonify, redirect # Removed 'flash'
+from flask import Flask, render_template, url_for, abort, send_from_directory, Response, request, jsonify, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -31,14 +31,32 @@ app = Flask(__name__)
 # 从 config.py 加载配置
 app.config.from_pyfile('config.py')
 
-# 配置日志记录
-logging.basicConfig(level=getattr(logging, app.config.get('LOG_LEVEL', 'INFO').upper()),
+# --- 日志配置 (最新调整) ---
+# 获取 config.py 中定义的日志级别字符串
+log_level_str = app.config.get('LOG_LEVEL', 'INFO').upper()
+# 将字符串转换为对应的 logging 模块级别常量
+log_level = getattr(logging, log_level_str, logging.INFO)
+
+# 配置根记录器
+logging.basicConfig(level=log_level,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers=[
                         logging.FileHandler(app.config['LOG_FILE']),
                         logging.StreamHandler()
                     ])
-app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL', 'INFO').upper()))
+
+# 将 Flask 应用自身的记录器级别设置为配置值
+app.logger.setLevel(log_level)
+
+# 确保 Werkzeug 记录器也遵循配置的级别。
+# 这一步通常在 app.run(debug=False) 时最有效。
+# 如果 debug=True，Flask 的调试器可能会强制 Werkzeug 输出 INFO 级别日志。
+if not app.debug: # 只有在非调试模式下才精确控制 Werkzeug 日志
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(log_level)
+    # 移除 Werkzeug 记录器可能存在的其他处理器，只使用 root logger 的处理器
+    # werkzeug_logger.handlers = [] # 不推荐完全清空，可能导致某些预期日志丢失
+    # werkzeug_logger.propagate = True # 确保它会将日志传递给根记录器
 
 
 db = SQLAlchemy(app)
@@ -471,7 +489,7 @@ def user_posts_all(username):
                            posts=all_posts,
                            total_posts=len(all_posts))
 
-# Removed: @app.route('/admin/scan_user/<username>', methods=['POST']) and its function admin_scan_user
+# 删除了: @app.route('/admin/scan_user/<username>', methods=['POST']) 和其函数 admin_scan_user
 
 
 @app.route('/media/<path:filename>')
@@ -638,4 +656,8 @@ if __name__ == '__main__':
     else:
         app.logger.info("config.py 中已禁用自动扫描。")
 
-    app.run(debug=True)
+    # 注意: Flask-CLI 会在它自己的环境中启动应用。
+    # 当直接运行 `python app.py` 时，`app.run(debug=...)` 会启动 Web 服务器。
+    # 当通过 `flask run` 运行时，它会使用 Werkzeug。
+    # `debug=False` 用于生产模式。
+    app.run(host='0.0.0.0',port=5000,debug=False)
