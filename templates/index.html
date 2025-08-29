@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter 存档用户列表</title>
+    <style>
+        /* 通用样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #F7F9F9; /* 浅灰色背景 */
+            color: #0F1419; /* 主要文本颜色 */
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px; /* 主内容区域的内边距 */
+            box-sizing: border-box;
+        }
+        a {
+            text-decoration: none;
+            color: #1DA1F2; /* X/Twitter 蓝色 */
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* 加载指示器 */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #1DA1F2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+            display: none; /* 默认隐藏 */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 用户列表容器 */
+        .container {
+            background-color: #FFFFFF; /* 白色卡片背景 */
+            border-radius: 16px; /* 更圆润的圆角 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* 更柔和、更明显的阴影 */
+            padding: 30px;
+            width: 100%; /* 允许容器占据全部宽度 */
+            margin: 0 auto; /* 水平居中容器 */
+            border: 1px solid #EFF3F4; /* 微妙的边框 */
+        }
+        /* 初始时隐藏容器，用于加载效果 */
+        .container.loading {
+            display: none;
+        }
+
+        /* 标题 */
+        h1 {
+            color: #0F1419; /* 深色标题颜色 */
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            font-weight: 800; /* 更粗的字体 */
+        }
+
+        /* 用户列表 */
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        li {
+            background-color: #FFFFFF; /* 每个项目的白色背景 */
+            margin-bottom: 10px; /* 略小的外边距 */
+            padding: 15px 20px; /* 调整内边距 */
+            border-radius: 12px; /* 圆角 */
+            border: 1px solid #EFF3F4; /* 一致的边框 */
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            cursor: pointer; /* 指示可点击项目 */
+        }
+        li:hover {
+            background-color: #F7F9F9; /* 浅色悬停效果 */
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 微妙的抬升效果 */
+        }
+        li a {
+            font-weight: bold;
+            font-size: 1.1em; /* 略小的字体，以保持一致性 */
+            flex-grow: 1; /* 允许链接增长并填充空间 */
+            color: #0F1419; /* 用户名的主要文本颜色 */
+        }
+        li a:hover {
+            text-decoration: none; /* 整个链接悬停时不带下划线，由列表项处理悬停效果 */
+            color: #1DA1F2; /* 悬停时颜色变为 X 蓝色 */
+        }
+
+        /* 头像 */
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%; /* 完美的圆形 */
+            margin-right: 15px;
+            border: 1px solid #EFF3F4; /* 微妙的头像边框 */
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+
+        /* 未找到用户的消息 */
+        p {
+            text-align: center;
+            color: #536471; /* 次要文本颜色 */
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        p small {
+            font-size: 0.9em;
+            color: #657786;
+        }
+    </style>
+</head>
+<body>
+    <div class="spinner" id="loadingSpinner"></div>
+    <div class="container loading" id="contentContainer">
+        <h1>Twitter 存档用户</h1>
+        {% if users %}
+            <ul>
+                {% for user in users %}
+                    <li>
+                        <img src="{{ url_for('serve_avatar', username=user) }}" alt="{{ user }} 的头像" class="avatar">
+                        <a href="{{ url_for('user_posts', username=user) }}">@{{ user }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>未找到任何用户。</p>
+            <p><small>请确保您的 'ROOT_DATA_FOLDER' 配置正确，并且其中包含用户子文件夹。</small></p>
+        {% endif %}
+    </div>
+
+    <script>
+        // 客户端加载指示器
+        document.addEventListener('DOMContentLoaded', function() {
+            var spinner = document.getElementById('loadingSpinner');
+            var container = document.getElementById('contentContainer');
+            
+            // 仅当内容加载时间超过短时间时显示加载指示器
+            var timeout = setTimeout(function() {
+                spinner.style.display = 'block';
+                container.classList.add('loading'); // 在加载指示器可能激活时保持内容隐藏
+            }, 100); // 100ms 后显示指示器
+
+            // 内容准备就绪 (DOM 加载完成) 后，隐藏指示器并显示内容
+            // 对于此页面，DOMContentLoaded 几乎是即时的，但为了保持一致性而保留
+            clearTimeout(timeout);
+            spinner.style.display = 'none';
+            container.classList.remove('loading');
+        });
+
+        // 点击用户链接时，显示下一个页面的加载指示器
+        document.querySelectorAll('li a').forEach(link => {
+            link.addEventListener('click', function() {
+                document.getElementById('loadingSpinner').style.display = 'block';
+                document.getElementById('contentContainer').classList.add('loading');
+            });
+        });
+    </script>
+</body>
+</html>
