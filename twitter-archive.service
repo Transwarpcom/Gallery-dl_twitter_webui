@@ -1,0 +1,14 @@
+[Unit]
+Description=Twitter Archive WebUI Service
+After=network.target
+
+[Service]
+User=transwarp
+Group=transwarp
+WorkingDirectory=/home/transwarp/Gallery-dl_twitter_webui
+Environment="PATH=/home/transwarp/Gallery-dl_twitter_webui/venv/bin"
+ExecStart=/home/transwarp/Gallery-dl_twitter_webui/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 run:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
