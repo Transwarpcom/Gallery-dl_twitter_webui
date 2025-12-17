@@ -1,0 +1,3 @@
+IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+VIDEO_EXTENSIONS = ('.mp4',)
+MEDIA_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
