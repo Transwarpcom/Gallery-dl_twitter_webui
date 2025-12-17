@@ -168,7 +168,7 @@
         .post-container.loading {
             display: none;
         }
-        
+
         /* 单个帖子卡片 */
         .post {
             background-color: #FFFFFF;
@@ -283,7 +283,7 @@
         .post-stats span:nth-child(2)::before { content: '🔄'; }
         .post-stats span:nth-child(3)::before { content: '💬'; }
         .post-stats span:nth-child(4)::before { content: '🔖'; }
-        
+
         /* 推文 ID */
         .post-id-text {
             display: block;
@@ -319,13 +319,13 @@
 <body>
     <div class="spinner" id="loadingSpinner"></div>
     <div class="header-container" id="headerContainer">
-        <a href="{{ url_for('index') }}" class="back-link">返回用户列表</a>
+        <a href="{{ url_for('main.index') }}" class="back-link">返回用户列表</a>
         <h1>@{{ username }} 的推文 ({{ total_posts }} 条)</h1>
     </div>
 
     {# 用户详细信息头部 #}
     <div class="user-profile-header">
-        <img src="{{ url_for('serve_avatar', username=user_details.username) }}" alt="{{ user_details.username }} 的头像" class="profile-avatar">
+        <img src="{{ url_for('main.serve_avatar', username=user_details.username) }}" alt="{{ user_details.username }} 的头像" class="profile-avatar">
         <div class="profile-name">{{ user_details.name or user_details.username }} {% if user_details.verified %}✅{% endif %}</div>
         <div class="profile-username">@{{ user_details.username }}</div>
         {% if user_details.nick and user_details.nick != user_details.name and user_details.nick != user_details.username %}
@@ -361,7 +361,7 @@
             {% for post in posts %}
             <div class="post">
                 <div class="post-header">
-                    <img src="{{ url_for('serve_avatar', username=post.user.username) }}" alt="{{ post.user.username }} 的头像" class="avatar">
+                    <img src="{{ url_for('main.serve_avatar', username=post.user.username) }}" alt="{{ post.user.username }} 的头像" class="avatar">
                     <div class="user-info">
                         <span class="username">
                             {{ post.user.name or post.user.username }}
@@ -383,7 +383,7 @@
                 {% if post.media_files %}
                 <div class="post-media">
                     {% for media_file_path in post.media_files %}
-                        {% set full_media_url = url_for('serve_media', filename=media_file_path) %}
+                        {% set full_media_url = url_for('main.serve_media', filename=media_file_path) %}
                         {% if media_file_path.lower().endswith(IMAGE_EXTENSIONS) %}
                             <img src="{{ full_media_url }}" alt="推文图片" loading="lazy">
                         {% elif media_file_path.lower().endswith(VIDEO_EXTENSIONS) %}
@@ -442,7 +442,7 @@
                 loadingMoreSpinner.style.display = 'block';
 
                 currentPage++;
-                var api_url = "{{ url_for('api_user_posts', username=username) }}" + "?page=" + currentPage;
+                var api_url = "{{ url_for('main.api_user_posts', username=username) }}" + "?page=" + currentPage;
 
                 fetch(api_url)
                     .then(response => response.json())
@@ -455,7 +455,7 @@
                                 var postHtml = `
                                     <div class="post">
                                         <div class="post-header">
-                                            <img src="{{ url_for('serve_avatar', username='') }}${post.user_info.username}" alt="${post.user_info.username} 的头像" class="avatar">
+                                            <img src="{{ url_for('main.serve_avatar', username='') }}${post.user_info.username}" alt="${post.user_info.username} 的头像" class="avatar">
                                             <div class="user-info">
                                                 <span class="username">
                                                     ${post.user_info.name || post.user_info.username}
@@ -475,7 +475,7 @@
                                         ${post.media_files.length > 0 ? `
                                         <div class="post-media">
                                             ${post.media_files.map(media_file_path => {
-                                                const full_media_url = "{{ url_for('serve_media', filename='') }}" + media_file_path;
+                                                const full_media_url = "{{ url_for('main.serve_media', filename='') }}" + media_file_path;
                                                 const lowerPath = media_file_path.toLowerCase();
                                                 // 通过 Jinja 的 tojson 访问全局常量
                                                 if ({{ IMAGE_EXTENSIONS | tojson }}.some(ext => lowerPath.endsWith(ext))) {
