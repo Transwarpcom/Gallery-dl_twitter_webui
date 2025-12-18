@@ -74,27 +74,43 @@
         li {
             background-color: #FFFFFF; /* 每个项目的白色背景 */
             margin-bottom: 10px; /* 略小的外边距 */
-            padding: 15px 20px; /* 调整内边距 */
             border-radius: 12px; /* 圆角 */
             border: 1px solid #EFF3F4; /* 一致的边框 */
-            transition: background-color 0.2s ease, transform 0.2s ease;
-            display: flex;
-            align-items: center;
-            cursor: pointer; /* 指示可点击项目 */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 0; /* padding moved to link for clickable area */
         }
         li:hover {
-            background-color: #F7F9F9; /* 浅色悬停效果 */
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 微妙的抬升效果 */
         }
-        li a {
+
+        .user-card-link {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 15px 20px; /* from li */
+            box-sizing: border-box;
+            text-decoration: none;
+            color: inherit;
+            transition: background-color 0.2s ease;
+            border-radius: 12px; /* Match li radius */
+        }
+
+        .user-card-link:hover {
+             background-color: #F7F9F9; /* 浅色悬停效果 */
+             text-decoration: none;
+        }
+
+        .user-card-link .username {
             font-weight: bold;
             font-size: 1.1em; /* 略小的字体，以保持一致性 */
             flex-grow: 1; /* 允许链接增长并填充空间 */
             color: #0F1419; /* 用户名的主要文本颜色 */
+            margin-left: 15px; /* Spacing between avatar and text */
         }
-        li a:hover {
-            text-decoration: none; /* 整个链接悬停时不带下划线，由列表项处理悬停效果 */
+
+        .user-card-link:hover .username {
             color: #1DA1F2; /* 悬停时颜色变为 X 蓝色 */
         }
 
@@ -103,7 +119,6 @@
             width: 48px;
             height: 48px;
             border-radius: 50%; /* 完美的圆形 */
-            margin-right: 15px;
             border: 1px solid #EFF3F4; /* 微妙的头像边框 */
             flex-shrink: 0;
             object-fit: cover;
@@ -130,8 +145,10 @@
             <ul>
                 {% for user in users %}
                     <li>
-                        <img src="{{ url_for('serve_avatar', username=user) }}" alt="{{ user }} 的头像" class="avatar">
-                        <a href="{{ url_for('user_posts', username=user) }}">@{{ user }}</a>
+                        <a href="{{ url_for('main.user_posts', username=user) }}" class="user-card-link" aria-label="查看 @{{ user }} 的存档">
+                            <img src="{{ url_for('main.serve_avatar', username=user) }}" alt="" class="avatar">
+                            <span class="username">@{{ user }}</span>
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
