@@ -60,6 +60,10 @@ class Post(db.Model):
 
     raw_json_data_text = db.Column(db.Text, nullable=True)
 
+    __table_args__ = (
+        db.Index('idx_post_user_id_id', 'user_id', 'id'),
+    )
+
     def __repr__(self):
         return f'<推文 {self.id} 来自 {self.user.username}>'
 
