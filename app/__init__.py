@@ -53,4 +53,22 @@ def create_app(config_file='config.py'):
     app.jinja_env.globals['VIDEO_EXTENSIONS'] = VIDEO_EXTENSIONS
     app.jinja_env.globals['MEDIA_EXTENSIONS'] = MEDIA_EXTENSIONS
 
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+
+        # CSP: Allow self, inline scripts/styles (legacy support), and data images
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "connect-src 'self'"
+        )
+        response.headers['Content-Security-Policy'] = csp_policy
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        return response
+
     return app
