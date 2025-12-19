@@ -313,10 +313,10 @@
                 </div>
                 {% endif %}
                 <div class="post-stats">
-                    <span>{{ post.favorite_count | default(0) }}</span>
-                    <span>{{ post.retweet_count | default(0) }}</span>
-                    <span>{{ post.reply_count | default(0) }}</span>
-                    <span>{{ post.bookmark_count | default(0) }}</span>
+                    <span aria-label="{{ post.favorite_count | default(0) }} 喜欢" title="喜欢">{{ post.favorite_count | default(0) }}</span>
+                    <span aria-label="{{ post.retweet_count | default(0) }} 转发" title="转发">{{ post.retweet_count | default(0) }}</span>
+                    <span aria-label="{{ post.reply_count | default(0) }} 回复" title="回复">{{ post.reply_count | default(0) }}</span>
+                    <span aria-label="{{ post.bookmark_count | default(0) }} 书签" title="书签">{{ post.bookmark_count | default(0) }}</span>
                 </div>
                 <small class="post-id-text">ID: {{ post.id }}</small>
             </div>
