@@ -3,6 +3,11 @@ import os
 # Flask 应用的根目录 (假设 config.py 与 app.py 在同一目录)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+# 安全密钥配置
+# 优先从环境变量获取，如果没有则使用默认值（开发环境）
+# 生产环境强烈建议设置环境变量 SECRET_KEY
+SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-please-change-in-prod')
+
 # Twitter 存档数据根目录
 # 重要: 请替换为您的实际根数据文件夹路径
 ROOT_DATA_FOLDER = r"/mnt/sdb/twitter" # 示例: r"C:\Users\YourUser\Gallery-dl\twitter"
