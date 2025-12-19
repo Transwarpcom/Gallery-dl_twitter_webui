@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 import json
 import logging
+from functools import cached_property
 from app.extensions import db
 
 logger = logging.getLogger(__name__)
@@ -67,8 +68,9 @@ class Post(db.Model):
     def __repr__(self):
         return f'<推文 {self.id} 来自 {self.user.username}>'
 
-    @property
+    @cached_property
     def media_files(self) -> List[str]:
+        # Cached to avoid repeated JSON parsing on every access
         if self.media_files_json:
             try:
                 return json.loads(self.media_files_json)
@@ -77,8 +79,9 @@ class Post(db.Model):
                 return []
         return []
 
-    @property
+    @cached_property
     def raw_json_data(self) -> Optional[Dict[str, Any]]:
+        # Cached to avoid repeated JSON parsing on every access
         if self.raw_json_data_text:
             try:
                 return json.loads(self.raw_json_data_text)
