@@ -1,0 +1,3 @@
+## 2024-05-22 - [Back to Top & Stats Accessibility]
+**Learning:** Adding `aria-label` to iconic statistics (❤️, 🔄) significantly improves screen reader experience by providing context that emojis alone lack. However, since the stats are dynamically loaded via both Jinja2 (initial render) and JavaScript (infinite scroll), changes must be duplicated in both logic paths to maintain consistency.
+**Action:** When modifying list items that support infinite scroll, always verify and update the JavaScript template string alongside the server-side Jinja2 template. Use explicit text labels in `aria-label` for icons to ensure clarity.
