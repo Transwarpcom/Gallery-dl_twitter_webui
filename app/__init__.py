@@ -53,4 +53,19 @@ def create_app(config_file='config.py'):
     app.jinja_env.globals['VIDEO_EXTENSIONS'] = VIDEO_EXTENSIONS
     app.jinja_env.globals['MEDIA_EXTENSIONS'] = MEDIA_EXTENSIONS
 
+    @app.after_request
+    def inject_security_headers(response):
+        """
+        Inject security headers into every response.
+        """
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        # Content-Security-Policy: Allow 'unsafe-inline' for scripts and styles as the app relies on them.
+        # Images and media are allowed from 'self' and data URIs.
+        # This is a basic policy to prevent loading resources from unauthorized domains.
+        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+        return response
+
     return app
