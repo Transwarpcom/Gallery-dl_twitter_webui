@@ -314,6 +314,45 @@
             color: #536471;
             display: none; /* 默认隐藏 */
         }
+
+        /* 回到顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #1DA1F2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.2s;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 4px; /* Adjust arrow alignment */
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            background-color: #1a91da;
+            transform: translateY(-2px);
+        }
+
+        .back-to-top:focus {
+            outline: 2px solid #0F1419;
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -409,6 +448,11 @@
         <div class="spinner" id="loadingMore"></div>
         <div id="noMorePosts">没有更多推文了。</div>
     </div>
+
+    <!-- 回到顶部按钮 -->
+    <button id="backToTop" class="back-to-top" aria-label="回到顶部" title="回到顶部">
+        ↑
+    </button>
 
     <script>
         // ... (JavaScript 保持不变，因为它已经处理了 post.user_info.name/nick 等) ...
@@ -553,6 +597,24 @@
                 document.getElementById('loadingSpinner').style.display = 'block';
                 document.getElementById('headerContainer').style.display = 'none';
                 document.getElementById('postsContainer').classList.add('loading');
+            });
+
+            // 回到顶部按钮逻辑
+            var backToTopButton = document.getElementById('backToTop');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    backToTopButton.classList.add('visible');
+                } else {
+                    backToTopButton.classList.remove('visible');
+                }
+            });
+
+            backToTopButton.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             });
         });
 
