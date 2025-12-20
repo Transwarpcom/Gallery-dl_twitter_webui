@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Any
+from functools import cached_property
 import json
 import logging
 from app.extensions import db
@@ -67,8 +68,12 @@ class Post(db.Model):
     def __repr__(self):
         return f'<推文 {self.id} 来自 {self.user.username}>'
 
-    @property
+    @cached_property
     def media_files(self) -> List[str]:
+        """
+        使用 cached_property 避免重复解析 JSON。
+        注意：如果在实例生命周期内修改了 media_files_json，缓存不会自动更新。
+        """
         if self.media_files_json:
             try:
                 return json.loads(self.media_files_json)
@@ -77,8 +82,11 @@ class Post(db.Model):
                 return []
         return []
 
-    @property
+    @cached_property
     def raw_json_data(self) -> Optional[Dict[str, Any]]:
+        """
+        使用 cached_property 避免重复解析 JSON。
+        """
         if self.raw_json_data_text:
             try:
                 return json.loads(self.raw_json_data_text)
